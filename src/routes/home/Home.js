@@ -18,13 +18,6 @@ import ContextType from '../../ContextType';
 import Link from '../../components/Link';
 
 class Home extends React.Component {
-  // static propTypes = {
-  //   data: PropTypes.shape({
-  //     loading: PropTypes.bool.isRequired,
-  //     news: PropTypes.arrayOf( ),
-  //   }).isRequired,
-  // };
-
   static contextTypes = ContextType;
 
   constructor(props, context) {

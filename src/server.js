@@ -12,18 +12,17 @@ import Promise from 'bluebird';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
-import expressJwt, { UnauthorizedError as Jwt401Error } from 'express-jwt';
-import { graphql } from 'graphql';
+import {graphql} from 'graphql';
 import expressGraphQL from 'express-graphql';
 import nodeFetch from 'node-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom/server';
-import { getDataFromTree } from 'react-apollo';
+import {getDataFromTree} from 'react-apollo';
 import PrettyError from 'pretty-error';
 import createApolloClient from './core/createApolloClient';
 import App from './components/App';
 import Html from './components/Html';
-import { ErrorPageWithoutStyle } from './routes/error/ErrorPage';
+import {ErrorPageWithoutStyle} from './routes/error/ErrorPage';
 import errorPageStyle from './routes/error/ErrorPage.css';
 import createFetch from './createFetch';
 import router from './router';
@@ -31,8 +30,14 @@ import schema from './data/schema';
 // import assets from './asset-manifest.json'; // eslint-disable-line import/no-unresolved
 import chunks from './chunk-manifest.json'; // eslint-disable-line import/no-unresolved
 import configureStore from './store/configureStore';
-import { setRuntimeVariable } from './actions/runtime';
+import {setRuntimeVariable} from './actions/runtime';
 import config from './config';
+import passport from './passport';
+import session from 'express-session';
+import connectRedis from 'connect-redis';
+import persist from './persist';
+import type {UserType} from './types/index';
+import type {ContextType} from './types';
 
 process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
@@ -60,26 +65,48 @@ app.set('trust proxy', config.trustProxy);
 // -----------------------------------------------------------------------------
 app.use(express.static(path.resolve(__dirname, 'public')));
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
+
+const RedisStore = connectRedis(session);
+
+app.use(session({
+  store: new RedisStore({client: persist}),
+  secret: 'keyboard cat',
+  resave: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 //
 // Authentication
 // -----------------------------------------------------------------------------
-app.use(expressJwt({
-  secret: config.auth.jwt.secret,
-  credentialsRequired: false,
-  getToken: req => req.cookies.id_token,
-}));
-// Error handler for express-jwt
-app.use((err, req, res, next) => {
-  // eslint-disable-line no-unused-vars
-  if (err instanceof Jwt401Error) {
-    console.error('[express-jwt-error]', req.cookies.id_token);
-    // `clearCookie`, otherwise user can't use web-app until cookie expires
-    res.clearCookie('id_token');
-  }
-  next(err);
+// app.use(expressJwt({
+//   secret: config.auth.jwt.secret,
+//   credentialsRequired: false,
+//   getToken: req => req.cookies.id_token,
+// }));
+// // Error handler for express-jwt
+// app.use((err, req, res, next) => {
+//   // eslint-disable-line no-unused-vars
+//   if (err instanceof Jwt401Error) {
+//     console.error('[express-jwt-error]', req.cookies.id_token);
+//     // `clearCookie`, otherwise user can't use web-app until cookie expires
+//     res.clearCookie('id_token');
+//   }
+//   next(err);
+// });
+
+app.get('/login/twitter', passport.authenticate('twitter'));
+
+app.get('/login/twitter/callback', passport.authenticate('twitter', {
+  failure: (req, res) => {
+    debugger;
+  },
+  failureRedirect: '/login'
+}), (req, res) => {
+  res.redirect('/');
 });
 
 //
@@ -89,7 +116,7 @@ app.use((err, req, res, next) => {
 const graphqlMiddleware = expressGraphQL(req => ({
   schema,
   graphiql: true, // __DEV__,
-  rootValue: { request: req },
+  rootValue: {request: req},
   pretty: __DEV__,
 }));
 
@@ -111,7 +138,7 @@ app.get('*', async (req, res, next) => {
 
     const apolloClient = createApolloClient({
       schema,
-      rootValue: { request: req },
+      rootValue: {request: req},
     });
 
     // Universal HTTP client
@@ -141,17 +168,16 @@ app.get('*', async (req, res, next) => {
 
     // Global (context) variables that can be easily accessed from any React component
     // https://facebook.github.io/react/docs/context.html
-    const context = {
+    const context: ContextType = {
+      profile: (req.user: UserType),
       insertCss,
       fetch,
-      // The twins below are wild, be careful!
       pathname: req.path,
       query: req.query,
+      client: apolloClient,
       // You can access redux through react-redux connect
       store,
       storeSubscription: null,
-      // Apollo Client for use with react-apollo
-      client: apolloClient,
     };
 
     const route = await router.resolve(context);
@@ -161,13 +187,13 @@ app.get('*', async (req, res, next) => {
       return;
     }
 
-    const data = { ...route };
+    const data = {...route};
     const rootComponent = <App context={context}>{route.component}</App>;
     await getDataFromTree(rootComponent);
     // this is here because of Apollo redux APOLLO_QUERY_STOP action
     await Promise.delay(0);
     data.children = await ReactDOM.renderToString(rootComponent);
-    data.styles = [{ id: 'css', cssText: [...css].join('') }];
+    data.styles = [{id: 'css', cssText: [...css].join('')}];
 
     const scripts = new Set();
     const addChunk = (chunk) => {
@@ -212,12 +238,12 @@ pe.skipPackage('express');
 app.use((err, req, res, next) => {
   console.error(pe.render(err));
   const html = ReactDOM.renderToStaticMarkup(<Html
-      title="Internal Server Error"
-      description={err.message}
-      styles={[{ id: 'css', cssText: errorPageStyle._getCss() }]} // eslint-disable-line no-underscore-dangle
-    >
-      {ReactDOM.renderToString(<ErrorPageWithoutStyle error={err} />)}
-    </Html>);
+    title="Internal Server Error"
+    description={err.message}
+    styles={[{id: 'css', cssText: errorPageStyle._getCss()}]} // eslint-disable-line no-underscore-dangle
+  >
+  {ReactDOM.renderToString(<ErrorPageWithoutStyle error={err}/>)}
+  </Html>);
   res.status(err.status || 500);
   res.send(`<!doctype html>${html}`);
 });

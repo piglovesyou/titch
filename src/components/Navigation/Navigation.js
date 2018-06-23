@@ -10,15 +10,20 @@
 import React from 'react';
 import withStyles from 'isomorphic-style-loader/lib/withStyles';
 import s from './Navigation.css';
-import Link from '../Link';
+import ContextType from '../../ContextType';
 
 class Navigation extends React.Component {
+  static contextTypes = ContextType;
+
   render() {
     return (
       <div className={s.root} role="navigation">
-        <Link className={s.link} to="/about">
-          About
-        </Link>
+        {/*<Link className={s.link} to="/about">*/}
+        {/*About*/}
+        {/*</Link>*/}
+        {this.context.profile
+          ? <img src={this.context.profile.image}/>
+          : null}
       </div>
     );
   }

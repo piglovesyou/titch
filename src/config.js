@@ -26,8 +26,8 @@ module.exports = {
     clientUrl: process.env.API_CLIENT_URL || '',
     // API URL to be used in the server-side code
     serverUrl:
-      process.env.API_SERVER_URL ||
-      `http://localhost:${process.env.PORT || 3000}`,
+    process.env.API_SERVER_URL ||
+    `http://localhost:${process.env.PORT || 3000}`,
   },
 
   // Database
@@ -41,14 +41,11 @@ module.exports = {
 
   // Authentication
   auth: {
-    // jwt: { secret: process.env.JWT_SECRET || 'React Starter Kit' },
+    jwt: { secret: process.env.JWT_SECRET || 'React Starter Kit' },
 
-    // https://apps.twitter.com/
     twitter: {
-      key: process.env.TWITTER_CONSUMER_KEY || 'Ie20AZvLJI2lQD5Dsgxgjauns',
-      secret:
-        process.env.TWITTER_CONSUMER_SECRET ||
-        'KTZ6cxoKnEakQCeSpZlaUCJWGAlTEBJj0y2EMkUBujA7zWSvaQ',
+      key: process.env.TWITTER_CONSUMER_KEY,
+      secret: process.env.TWITTER_CONSUMER_SECRET,
     },
   },
 };
