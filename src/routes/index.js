@@ -20,6 +20,10 @@ const routes = {
       load: () => import(/* webpackChunkName: 'home' */ './home'),
     },
     {
+      path: '/login',
+      load: () => import(/* webpackChunkName: 'detail' */ './login'),
+    },
+    {
       path: '/detail/:id',
       load: () => import(/* webpackChunkName: 'detail' */ './detail'),
     },
