@@ -27,6 +27,7 @@ class Home extends React.Component {
     this.handleQueryChange = this.handleQueryChange.bind(this);
 
     const q = (context.query && context.query.q) || '';
+    console.log('q...' +q);
     this.q = q;
     this.state = { q };
   }
@@ -77,6 +78,7 @@ class Home extends React.Component {
             variables={{ query: this.q, from: 0, count: 10 }}
           >
             {({ loading, error, data }) => {
+              console.log(loading ? '...loading' : '...done')
               if (error) return <div>boom!!!</div>;
               const aucItemList = loading
                 ? {

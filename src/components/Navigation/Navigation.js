@@ -22,11 +22,11 @@ class Navigation extends React.Component {
         {/* <Link className={s.link} to="/about"> */}
         {/* About */}
         {/* </Link> */}
-        <ContextConsumer>
-          {context => (this.context.profile
-              ? <img src={context.profile.image}/>
-              : null)}
-        </ContextConsumer>
+        {/*<ContextConsumer>*/}
+          {/*{context => (this.context.profile*/}
+              {/*? <img src={context.profile.image}/>*/}
+              {/*: null)}*/}
+        {/*</ContextConsumer>*/}
       </div>
     );
   }

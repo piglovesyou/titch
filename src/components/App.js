@@ -9,9 +9,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ApolloProvider } from 'react-apollo';
+import {ApolloProvider} from 'react-apollo';
 import ContextType from '../ContextType';
-import { ContextProvider } from './ContextProvider';
+import {ContextProvider} from './ContextProvider';
+import {Provider as WithStyleContextProvider} from 'isomorphic-style-loader/lib/context';
 
 class App extends React.PureComponent {
   static propTypes = {
@@ -27,13 +28,15 @@ class App extends React.PureComponent {
 
   render() {
     // Here, we are at universe level, sure? ;-)
-    const { client } = this.props.context;
+    const {client} = this.props.context;
     // NOTE: If you need to add or modify header, footer etc. of the app,
     // please do that inside the Layout component.
     return (
       <ApolloProvider client={client}>
         <ContextProvider value={this.props.context}>
-          {this.props.children}
+          <WithStyleContextProvider value={this.props.context.insertCss}>
+            {this.props.children}
+          </WithStyleContextProvider>
         </ContextProvider>
       </ApolloProvider>
     );
