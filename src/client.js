@@ -20,7 +20,7 @@ import { updateMeta } from './DOMUtils';
 import history from './history';
 import createApolloClient from './core/createApolloClient';
 import router from './router';
-import type {UserType} from './types';
+import type { UserType } from './types';
 
 // Universal HTTP client
 const fetch = createFetch(window.fetch, {

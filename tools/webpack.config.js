@@ -121,6 +121,8 @@ const config = {
             // Remove unnecessary React propTypes from the production build
             // https://github.com/oliviertassinari/babel-plugin-transform-react-remove-prop-types
             ...(isDebug ? [] : ['transform-react-remove-prop-types']),
+
+            ...(isDebug ? ['flow-react-proptypes'] : []),
           ],
         },
       },

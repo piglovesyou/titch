@@ -12,17 +12,20 @@ import Promise from 'bluebird';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
-import {graphql} from 'graphql';
+import { graphql } from 'graphql';
 import expressGraphQL from 'express-graphql';
 import nodeFetch from 'node-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom/server';
-import {getDataFromTree} from 'react-apollo';
+import { getDataFromTree } from 'react-apollo';
 import PrettyError from 'pretty-error';
+import connectRedis from 'connect-redis';
+import session from 'express-session';
+
 import createApolloClient from './core/createApolloClient';
 import App from './components/App';
 import Html from './components/Html';
-import {ErrorPageWithoutStyle} from './routes/error/ErrorPage';
+import { ErrorPageWithoutStyle } from './routes/error/ErrorPage';
 import errorPageStyle from './routes/error/ErrorPage.css';
 import createFetch from './createFetch';
 import router from './router';
@@ -30,14 +33,11 @@ import schema from './data/schema';
 // import assets from './asset-manifest.json'; // eslint-disable-line import/no-unresolved
 import chunks from './chunk-manifest.json'; // eslint-disable-line import/no-unresolved
 import configureStore from './store/configureStore';
-import {setRuntimeVariable} from './actions/runtime';
+import { setRuntimeVariable } from './actions/runtime';
 import config from './config';
 import passport from './passport';
-import session from 'express-session';
-import connectRedis from 'connect-redis';
 import persist from './persist';
-import type {UserType} from './types/index';
-import type {ContextType} from './types';
+import type { ContextType, UserType } from './types';
 
 process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
@@ -65,15 +65,15 @@ app.set('trust proxy', config.trustProxy);
 // -----------------------------------------------------------------------------
 app.use(express.static(path.resolve(__dirname, 'public')));
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const RedisStore = connectRedis(session);
 
 app.use(session({
-  store: new RedisStore({client: persist}),
+  store: new RedisStore({ client: persist }),
   secret: 'keyboard cat',
-  resave: false
+  resave: false,
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -101,10 +101,7 @@ app.use(passport.session());
 app.get('/login/twitter', passport.authenticate('twitter'));
 
 app.get('/login/twitter/callback', passport.authenticate('twitter', {
-  failure: (req, res) => {
-    debugger;
-  },
-  failureRedirect: '/login'
+  failureRedirect: '/login',
 }), (req, res) => {
   res.redirect('/');
 });
@@ -116,7 +113,7 @@ app.get('/login/twitter/callback', passport.authenticate('twitter', {
 const graphqlMiddleware = expressGraphQL(req => ({
   schema,
   graphiql: true, // __DEV__,
-  rootValue: {request: req},
+  rootValue: { request: req },
   pretty: __DEV__,
 }));
 
@@ -138,7 +135,7 @@ app.get('*', async (req, res, next) => {
 
     const apolloClient = createApolloClient({
       schema,
-      rootValue: {request: req},
+      rootValue: { request: req },
     });
 
     // Universal HTTP client
@@ -187,13 +184,13 @@ app.get('*', async (req, res, next) => {
       return;
     }
 
-    const data = {...route};
+    const data = { ...route };
     const rootComponent = <App context={context}>{route.component}</App>;
     await getDataFromTree(rootComponent);
     // this is here because of Apollo redux APOLLO_QUERY_STOP action
     await Promise.delay(0);
     data.children = await ReactDOM.renderToString(rootComponent);
-    data.styles = [{id: 'css', cssText: [...css].join('')}];
+    data.styles = [{ id: 'css', cssText: [...css].join('') }];
 
     const scripts = new Set();
     const addChunk = (chunk) => {
@@ -240,7 +237,7 @@ app.use((err, req, res, next) => {
   const html = ReactDOM.renderToStaticMarkup(<Html
     title="Internal Server Error"
     description={err.message}
-    styles={[{id: 'css', cssText: errorPageStyle._getCss()}]} // eslint-disable-line no-underscore-dangle
+    styles={[{ id: 'css', cssText: errorPageStyle._getCss() }]} // eslint-disable-line no-underscore-dangle
   >
   {ReactDOM.renderToString(<ErrorPageWithoutStyle error={err}/>)}
   </Html>);
