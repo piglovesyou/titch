@@ -12,7 +12,7 @@ export type ContextType = {
   insertCss: Function,
   fetch: Function,
   pathname: string,
-  query: { [string]: number },
+  query: { [string]: string },
   client: any, // Apollo Client
   // ...ReduxProvider.childContextTypes,
 };
