@@ -1,14 +1,22 @@
 // @flow
 
 import fetch from 'node-fetch';
-import { JSDOM } from 'jsdom';
-import { makeExecutableSchema } from 'graphql-tools';
-import { basename } from 'path';
-import { URL } from 'url';
-import { fromArray } from 'hole';
+import {JSDOM} from 'jsdom';
+import {makeExecutableSchema} from 'graphql-tools';
+import {basename} from 'path';
+import {URL} from 'url';
+import {fromArray} from 'hole';
 import range from 'lodash.range';
-
 import LRU from 'lru-cache';
+// $FlowFixMe
+import typeDefs from './schema.graphql';
+import persist from '../persist';
+
+const AUC_LIST_PER_PAGE = 20;
+
+
+// const typeDefs = [FS.readFileSync(Path.join(__dirname, 'schema.graphql'))];
+const schema = [typeDefs];
 
 const cache = LRU({
   max: 500,
@@ -17,57 +25,11 @@ const cache = LRU({
   maxAge: 1000 * 60 * 60,
 });
 
-const schema = [
-  `
-  type AucItemImage {
-    src: String
-    width: Int
-    height: Int
-  }
-  
-  type AucItemDetail {
-    id: String
-    title: String
-    state: String
-    price: Int
-    priceText: String
-    images: [AucItemImage]
-  }
-  
-  type AucItem {
-    id: String
-    title: String
-    imgSrc: String
-    imgWidth: Int
-    imgHeight: Int
-    itemURL: String
-    price: Int
-    # detail: AucItemDetail
-  }
-  
-  type AucItemList {
-    totalCount: Int
-    items: [AucItem]
-  }
-  
-  type RootQuery {
-    getAucItemDetail(id: String): AucItemDetail
-    getAucItemList(query: String, from: Int, count: Int): AucItemList
-  }
-  
-  schema {
-    query: RootQuery
-  }
-`,
-];
-
-const AUC_LIST_PER_PAGE = 20;
-
 // Merge all of the resolver objects together
 // Put schema together into one array of schema strings
 const resolvers = {
-  RootQuery: {
-    async getAucItemList(_: any, { query, from = 0, count = 4 }: { query: string, from: number, count: number }) {
+  Query: {
+    async getAucItemList(_: any, {query, from = 0, count = 4}: { query: string, from: number, count: number }) {
       // TODO: consider requesting out of totalCount range
 
       const normalizedQuery = query.replace(/　+/g, ' ').trim();
@@ -85,7 +47,7 @@ const resolvers = {
         )
         .collect();
 
-      const { totalCount } = xs[0];
+      const {totalCount} = xs[0];
       const fullItems = xs.reduce((items, rv) => [...items, ...rv.items], []);
 
       const sliceFrom = from % AUC_LIST_PER_PAGE;
@@ -128,7 +90,7 @@ const resolvers = {
         const res = await fetch(url);
         const html = await res.text();
         const {
-          window: { document },
+          window: {document},
         } = new JSDOM(html);
 
         const totalEl = document.querySelector('#AS-m19 .total em');
@@ -166,7 +128,7 @@ const resolvers = {
           })
           .filter(e => e);
 
-        const resolvedValue = { totalCount, items };
+        const resolvedValue = {totalCount, items};
         cache.set(pageCacheKey, resolvedValue);
         cache.set(totalCountCacheKey, totalCount);
 
@@ -178,7 +140,7 @@ const resolvers = {
       const res = await fetch(`https://page.auctions.yahoo.co.jp/jp/auction/${args.id}`);
       const html = await res.text();
       const {
-        window: { document },
+        window: {document},
       } = new JSDOM(html);
 
       const title = document.querySelector('.ProductTitle__text').textContent;
@@ -212,7 +174,7 @@ const resolvers = {
         const key = e.textContent;
         const value = a[i + 1].textContent.replace('：', '');
         const valueConverter = itemBodyValueConverters[key] || (e => e);
-        return { ...rv, [key]: valueConverter(value) };
+        return {...rv, [key]: valueConverter(value)};
       }, {});
 
       return {
@@ -225,12 +187,30 @@ const resolvers = {
       };
     },
   },
+  Mutation: {
+    async archiveAucItems(req, {userId, itemIds}: { userId: string, itemIds: [string] }): { userId: string, itemIds: [string] } {
+      const key = `user:${userId}:archivedAucItems`;
+
+      const results = await itemIds.reduce((multi, itemId) => {
+        return multi.sadd(key, itemId);
+      }, persist.multi()).execp();
+
+      const addedItemIds = results.reduce((added, result, index) => {
+        if (result === 1) {
+          return [...added, itemIds[index]];
+        }
+        return added;
+      }, []);
+
+      return {userId, addedItemIds,};
+    },
+  }
 };
 
 export default makeExecutableSchema({
   typeDefs: schema,
   resolvers,
-  ...(__DEV__ ? { log: e => console.error(e.stack) } : {}),
+  ...(__DEV__ ? {log: e => console.error(e.stack)} : {}),
 });
 
 function makeURL(base, params: Object) {

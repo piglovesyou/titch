@@ -3,8 +3,12 @@
 import bluebird from 'bluebird';
 import redis from 'redis';
 
-bluebird.promisifyAll(redis.RedisClient.prototype);
-bluebird.promisifyAll(redis.Multi.prototype);
+[redis.RedisClient.prototype, redis.Multi.prototype].forEach(proto => {
+  bluebird.promisifyAll(proto, {
+    suffix: 'p',
+  });
+});
+
 
 const persist = redis.createClient({
   host: process.env.REDIS_HOST || undefined,

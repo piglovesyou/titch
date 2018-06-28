@@ -1,0 +1,49 @@
+type AucItemImage {
+  src: String
+  width: Int
+  height: Int
+}
+
+type AucItemDetail {
+  id: String
+  title: String
+  state: String
+  price: Int
+  priceText: String
+  images: [AucItemImage]
+}
+
+type AucItem {
+  id: String
+  title: String
+  imgSrc: String
+  imgWidth: Int
+  imgHeight: Int
+  itemURL: String
+  price: Int
+  # detail: AucItemDetail
+}
+
+type AucItemList {
+  totalCount: Int
+  items: [AucItem]
+}
+
+type ResponseArchiveAucItems {
+  userId: String!
+  addedItemIds: [String!]
+}
+
+type Mutation {
+  archiveAucItems(userId: String!, itemIds: [String!]): ResponseArchiveAucItems
+}
+
+type Query {
+  getAucItemDetail(id: String): AucItemDetail
+  getAucItemList(query: String, from: Int, count: Int): AucItemList
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
