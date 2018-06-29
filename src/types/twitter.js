@@ -1,100 +1,26 @@
 // @flow
 
-type Entities = {
-  url: Url,
-  description: Url,
+type Description =  {
+  urls: any[],
 };
 
-type Entities1 = {
-  hashtags: Hashtags[],
+type Entities =  {
+  description: Description,
+};
+
+type Entities1 =  {
+  hashtags: any[],
   symbols: any[],
-  user_mentions: UserMentions[],
-  urls: Urls[],
+  user_mentions: any[],
+  urls: any[],
 };
 
-type Hashtags = {
-  text: string,
-  indices: number[],
-};
-
-type RetweetedStatus = {
-  created_at: string,
-  id: number,
-  id_str: string,
-  text: string,
-  truncated: boolean,
-  entities: Entities1,
-  source: string,
-  in_reply_to_status_id: string,
-  in_reply_to_status_id_str: string,
-  in_reply_to_user_id: string,
-  in_reply_to_user_id_str: string,
-  in_reply_to_screen_name: string,
-  geo: string,
-  coordinates: string,
-  place: string,
-  contributors: string,
-  is_quote_status: boolean,
-  retweet_count: number,
-  favorite_count: number,
-  favorited: boolean,
-  retweeted: boolean,
-  possibly_sensitive: boolean,
-  lang: string,
-};
-
-type Status = {
-  created_at: string,
-  id: number,
-  id_str: string,
-  text: string,
-  truncated: boolean,
-  entities: Entities1,
-  source: string,
-  in_reply_to_status_id: string,
-  in_reply_to_status_id_str: string,
-  in_reply_to_user_id: string,
-  in_reply_to_user_id_str: string,
-  in_reply_to_screen_name: string,
-  geo: string,
-  coordinates: string,
-  place: string,
-  contributors: string,
-  retweeted_status: RetweetedStatus,
-  is_quote_status: boolean,
-  retweet_count: number,
-  favorite_count: number,
-  favorited: boolean,
-  retweeted: boolean,
-  lang: string,
-};
-
-type Url = {
-  urls: Urls[],
-};
-
-type Urls = {
-  url: string,
-  expanded_url: string,
-  display_url: string,
-  indices: number[],
-};
-
-type UserMentions = {
-  screen_name: string,
-  name: string,
-  id: number,
-  id_str: string,
-  indices: number[],
-};
-
-export type TwitterProfile = {
+type Json =  {
   id: number,
   id_str: string,
   name: string,
   screen_name: string,
   location: string,
-  profile_location: string,
   description: string,
   url: string,
   entities: Entities,
@@ -104,7 +30,7 @@ export type TwitterProfile = {
   listed_count: number,
   created_at: string,
   favourites_count: number,
-  utc_offset: number,
+  utc_offset: string,
   time_zone: string,
   geo_enabled: boolean,
   verified: boolean,
@@ -129,9 +55,52 @@ export type TwitterProfile = {
   has_extended_profile: boolean,
   default_profile: boolean,
   default_profile_image: boolean,
-  following: string,
-  follow_request_sent: string,
-  notifications: string,
+  following: boolean,
+  follow_request_sent: boolean,
+  notifications: boolean,
   translator_type: string,
+  suspended: boolean,
+  needs_phone_verification: boolean,
 };
+
+type Photos =  {
+  value: string,
+};
+
+export type TwitterProfile =  {
+  id: string,
+  username: string,
+  displayName: string,
+  photos: Photos[],
+  provider: string,
+  _raw: string,
+  _json: Json,
+  _accessLevel: string,
+};
+
+type Status =  {
+  created_at: string,
+  id: number,
+  id_str: string,
+  text: string,
+  truncated: boolean,
+  entities: Entities1,
+  source: string,
+  in_reply_to_status_id: string,
+  in_reply_to_status_id_str: string,
+  in_reply_to_user_id: string,
+  in_reply_to_user_id_str: string,
+  in_reply_to_screen_name: string,
+  geo: string,
+  coordinates: string,
+  place: string,
+  contributors: string,
+  is_quote_status: boolean,
+  retweet_count: number,
+  favorite_count: number,
+  favorited: boolean,
+  retweeted: boolean,
+  lang: string,
+};
+
 
