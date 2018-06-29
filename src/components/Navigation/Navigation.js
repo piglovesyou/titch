@@ -14,8 +14,6 @@ import type { ContextType } from '../../types';
 import { ContextConsumer } from '../ContextProvider';
 
 class Navigation extends React.Component {
-  context: ContextType;
-
   render() {
     return (
       <div className={s.root} role="navigation">

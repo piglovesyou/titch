@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import {ApolloProvider} from 'react-apollo';
 import ContextType from '../ContextType';
 import {ContextProvider} from './ContextProvider';
-import {Provider as WithStyleContextProvider} from 'isomorphic-style-loader/lib/context';
+import {InsertCssProvider} from 'isomorphic-style-loader/lib/withStyles';
 
 class App extends React.PureComponent {
   static propTypes = {
@@ -34,9 +34,9 @@ class App extends React.PureComponent {
     return (
       <ApolloProvider client={client}>
         <ContextProvider value={this.props.context}>
-          <WithStyleContextProvider value={this.props.context.insertCss}>
+          <InsertCssProvider value={this.props.context.insertCss}>
             {this.props.children}
-          </WithStyleContextProvider>
+          </InsertCssProvider>
         </ContextProvider>
       </ApolloProvider>
     );
