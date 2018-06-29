@@ -14,9 +14,10 @@ import persist from '../persist';
 
 const AUC_LIST_PER_PAGE = 20;
 
-
 // const typeDefs = [FS.readFileSync(Path.join(__dirname, 'schema.graphql'))];
 const schema = [typeDefs];
+
+const dummyThroughputDelay = 2000;
 
 const cache = LRU({
   max: 500,
@@ -24,6 +25,13 @@ const cache = LRU({
   // dispose: function (key, n) { n.close(); } ,
   maxAge: 1000 * 60 * 60,
 });
+
+const currentProjects = {
+  projects: [
+    {id: 'A01234', name: 'Project A', ratio: 1},
+    {id: 'B01234', name: 'Project B', ratio: 2},
+  ],
+};
 
 // Merge all of the resolver objects together
 // Put schema together into one array of schema strings
@@ -186,26 +194,53 @@ const resolvers = {
         images,
       };
     },
+    async getCurrentProjects(req, data) {
+      await new Promise(resolve => setTimeout(resolve, dummyThroughputDelay));
+      return currentProjects;
+    }
   },
   Mutation: {
-    async archiveAucItems(req, {userId, itemIds}: { userId: string, itemIds: [string] }): { userId: string, itemIds: [string] } {
-      const key = `user:${userId}:archivedAucItems`;
-
-      const results = await itemIds.reduce((multi, itemId) => {
-        return multi.sadd(key, itemId);
-      }, persist.multi()).execp();
-
-      const addedItemIds = results.reduce((added, result, index) => {
-        if (result === 1) {
-          return [...added, itemIds[index]];
-        }
-        return added;
-      }, []);
+    async archiveAucItems(req, {userId, itemIds}: { userId: string, itemIds: [string] }): Promise<{ userId: string, addedItemIds: [string] }> {
+      const addedItemIds = await operateArchivedAucItem(userId, itemIds, 'sadd');
 
       return {userId, addedItemIds,};
     },
+    async unarchiveAucItems(req, {userId, itemIds}: { userId: string, itemIds: [string] }): Promise<{ userId: string, itemIds: [string] }> {
+      const removedItemIds = await operateArchivedAucItem(userId, itemIds, 'srem');
+
+      return {userId, removedItemIds,};
+    },
+    async updateProjectRatio(req, {userId, projectId, ratio}) {
+      await new Promise(resolve => setTimeout(resolve, dummyThroughputDelay));
+
+      const p = currentProjects.projects.find(p => p.id === projectId);
+      if (!p) {
+        throw new Error('Project not found');
+      }
+      p.ratio = ratio;
+      return p;
+    }
+    // async includeInArchivedAucItem(req, {userId, itemIds}: { userId: string, itemIds: [string] }): Promise<{ userId:
+    // string, itemIds: [string] }> { const removedItemIds = await operateArchivedAucItem(userId, itemIds,
+    // 'sismember');  return {userId, removedItemIds,}; },
   }
 };
+
+async function operateArchivedAucItem(userId, itemIds, operation: string) {
+  const key = `user:${userId}:archivedAucItems`;
+
+  const results = await itemIds.reduce((multi, itemId) => {
+    return multi[operation](key, itemId);
+  }, persist.multi()).execp();
+
+  const addedItemIds = results.reduce((operated, result, index) => {
+    if (result === 1) {
+      return [...operated, itemIds[index]];
+    }
+    return operated;
+  }, []);
+  return addedItemIds;
+}
 
 export default makeExecutableSchema({
   typeDefs: schema,
@@ -234,3 +269,4 @@ function parsePrice(str) {
 function getPageIndex(from) {
   return Math.floor(from / AUC_LIST_PER_PAGE);
 }
+
